@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Admin Dashboard | Plastic Waste System</title>
+
+    <!-- External Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Local CSS -->
+    <link rel="stylesheet" href="../css/admin.css">
+    
+</head>
+
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <h2>ADMIN</h2>
+    <a href="#" onclick="showSection('reportsSection')">🗂 Reports</a>
+    <a href="#" onclick="showSection('dashboardSection')">📊 Dashboard</a>
+    <a href="../php/logout.php">🚪 Logout</a>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main-content">
+
+<div class="header-title">Admin Monitoring Dashboard</div>
+
+<!-- DASHBOARD SECTION -->
+<div id="dashboardSection" class="section active">
+    <div class="dashboard-header">
+        <h2>Dashboard Overview</h2>
+        <div class="dashboard-actions">
+            <div class="kpis">
+                <div class="kpi-card">
+                    <div class="kpi-title">Total Reports</div>
+                    <div id="kpiTotal" class="kpi-value">0</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-title">Pending</div>
+                    <div id="kpiPending" class="kpi-value pending-color">0</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-title">Cleaned</div>
+                    <div id="kpiCleaned" class="kpi-value cleaned-color">0</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-title">Avg / Month</div>
+                    <div id="kpiAvg" class="kpi-value">0</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-charts refined">
+        <h3>Reports Analytics</h3>
+
+        <div class="dashboard-controls">
+            <div class="filters">
+                <select id="filterStatus" onchange="applyDashboardFilters()">
+                    <option value="all">All Reports</option>
+                    <option value="pending">Pending Only</option>
+                    <option value="cleaned">Cleaned Only</option>
+                </select>
+
+                <select id="filterRange" onchange="applyDashboardFilters()">
+                    <option value="monthly">This Month</option>
+                    <option value="yearly">This Year</option>
+                    <option value="all">All Time</option>
+                </select>
+            </div>
+            <div class="toolbar">
+                <input id="reportSearch" placeholder="Search reports..." />
+                <button id="exportCsvBtn" class="action small">Export CSV</button>
+            </div>
+        </div>
+
+        <div class="charts-grid-new">
+            <div class="left-column">
+                <div class="chart-card large">
+                    <h4>Reports Over Time</h4>
+                    <canvas id="lineChart"></canvas>
+                </div>
+
+        <div class="chart-card" style="height: 320px; margin-top: 18px; width: 149%; margin-bottom: 18px;">
+            <h4>Waste Type Distribution</h4>
+            <div style="position: relative; height: calc(100% - 30px); width: 100%;">
+                <canvas id="wasteTypeChart"></canvas>
+            </div>
+        </div>
+    </div>
+            <div class="right-column">
+                <div class="chart-card small">
+                    <h4>Pending vs Cleaned</h4>
+                    <canvas id="pieChart"></canvas>
+                </div>
+                <div class="chart-card small">
+                    <h4>Severity</h4>
+                    <canvas id="barChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+            <div class="chart-card recent">
+                    <h4>Recent Reports</h4>
+                    <div id="recentReportsList" class="recent-list"></div>
+                </div>
+            </div>
+
+</div>
+
+<!-- REPORTS SECTION -->
+<div id="reportsSection" class="section">
+
+    <div class="id-section">
+        <h2>Report Statistics</h2>
+        <div class="counters-container">
+            <div class="counter-box">
+                <div class="counter-title">Pending Reports</div>
+                <div id="countPending" class="counter-value pending-color">0</div>
+            </div>
+            <div class="counter-box">
+                <div class="counter-title">Cleaned Reports</div>
+                <div id="countCleaned" class="counter-value cleaned-color">0</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="map-wrapper">
+        <div id="map"></div>
+    </div>
+
+    <div class="lists-wrapper">
+        <div class="list-box">
+            <div class="list-title">Pending Reports</div>
+            <div id="pendingList"></div>
+        </div>
+
+        <div class="list-box">
+            <div class="list-title">Cleaned Reports</div>
+            <div id="cleanedList"></div>
+        </div>
+    </div>
+
+    <div class="crud-table">
+        <h3>Reports Management Table</h3>
+        <table id="reportsTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Photo</th>
+                    <th>Waste Type</th>
+                    <th>Location Type</th>
+                    <th>Severity</th>
+                    <th>Notes</th>
+                    <th>Status</th>
+                    <th>Date Added</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="reportsTableBody"></tbody>
+        </table>
+    </div>
+
+<!-- POPUP -->
+<div id="detailsPopup">
+    <h3 id="popupTitle"></h3>
+    <p><b>Waste:</b> <span id="popupWaste"></span></p>
+    <p><b>Location:</b> <span id="popupLocation"></span></p>
+    <p><b>Severity:</b> <span id="popupSeverity"></span></p>
+    <p><b>Notes:</b> <span id="popupNotes"></span></p>
+    <p><b>Date:</b> <span id="popupDate"></span></p>
+    <p><b>Cleaned:</b> <span id="popupCleanedDate"></span></p>
+    <img id="popupImage">
+    <button id="popupClose" onclick="closePopup()">Close</button>
+</div>
+
+<!-- JS -->
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="../js/admin.js" defer></script>
+</body>
+</html>
